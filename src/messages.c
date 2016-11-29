@@ -255,14 +255,14 @@ quotemass(double mass){
 
 
 void
-printMessage(char message[80]){
+printMessage(char message[80], int line){
 #ifdef NO_NCURSES
   if(strlen(message)>0)
     {
       printf("%s\n", message );
     }
 #else
-  move(22,0); printw("*** %s\n",message);
+  move(line,0); printw("*** %s\n",message);
   refresh();
 #endif
 }

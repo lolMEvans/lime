@@ -374,7 +374,7 @@ This is designed to be a generic function to write the grid data (in any of its 
   }
 
   sprintf(message, "Writing grid-point list to file %s", outFileName);
-  if(!silent) printMessage(message);
+  if(!silent) printMessage(message, 22);
 
   constructLinkArrays(gridInfo, gp, &links, &gridInfo.nLinks\
     , &nnLinks, &firstNearNeigh, &gridInfo.nNNIndices, dataFlags);
@@ -697,7 +697,7 @@ NOTE that gp should not be allocated before this routine is called.
   char message[80];
 
   sprintf(message, "Reading grid-point list from file %s", inFileName);
-  if(!silent) printMessage(message);
+  if(!silent) printMessage(message, 22);
 
   *dataFlags = 0;
 

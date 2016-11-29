@@ -402,7 +402,7 @@ void	goodnight(int, char*);
 void	greetings(void);
 void	greetings_parallel(int);
 void	printDone(int);
-void	printMessage(char *);
+void	printMessage(char *, int);
 void	progressbar(double, int);
 void	progressbar2(configInfo*, int, int, double, double, double);
 void	quotemass(double);
