@@ -171,10 +171,14 @@ run(inputPars inpars, image *inimg, const int nImages){
 
   parseInput(inpars, inimg, nImages, &par, &img, &md); /* Sets par.numDensities for !(par.doPregrid || par.restart) */
 
+  if(!silent){
     sprintf(message, "Using points = %d", par.pIntensity);
     printMessage(message, 30);
     sprintf(message, "Using sinks = %d", par.sinkPoints);
     printMessage(message, 31);
+    sprintf(message, "Using n0 = %.3e, w = %.3f", pow(10, log10(par.gridDensGlobalMax)/DENSITY_POWER), DENSITY_POWER);
+    printMessage(message, 32);
+  }
 
   if(!silent && par.nThreads>1){
     sprintf(message, "Number of threads used: %d", par.nThreads);
