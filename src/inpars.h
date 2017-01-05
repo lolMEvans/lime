@@ -23,6 +23,8 @@ typedef struct {
   int sampling,lte_only,init_lte,antialias,polarization,nThreads;
   char **moldatfile;
   char *gridInFile,**gridOutFiles;
+  char *tausurfacefile;
+  double tausurface;
   int nSolveIters;
   double (*gridDensMaxLoc)[DIM], *gridDensMaxValues;
   _Bool resetRNG;

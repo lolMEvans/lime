@@ -60,6 +60,7 @@ initParImg(inputPars *par, image **img)
   par->pregrid      = NULL;
   par->restart      = NULL;
   par->gridInFile   = NULL;
+  par->tausurfacefile = NULL;
 
   par->collPartIds  = malloc(sizeof(int)*MAX_N_COLL_PART);
   for(i=0;i<MAX_N_COLL_PART;i++) par->collPartIds[i] = 0; /* Possible values start at 1. */
@@ -87,6 +88,7 @@ initParImg(inputPars *par, image **img)
   par->nSolveIters=17;
   par->traceRayAlgorithm=0;
   par->resetRNG=0;
+  par->tausurface=2./3.;
 
   par->gridOutFiles = malloc(sizeof(char *)*NUM_GRID_STAGES);
   for(i=0;i<NUM_GRID_STAGES;i++)
@@ -174,6 +176,14 @@ run(inputPars inpars, image *inimg, const int nImages){
   if(!silent && par.nThreads>1){
     sprintf(message, "Number of threads used: %d", par.nThreads);
     printMessage(message);
+  }
+  if(!silent && (img[0].unit == 5 || img[1].unit == 5)){
+    sprintf(message, "Outputting optical depth surface at %.2f au", par.tausurface);
+    printMessage(message);
+  }
+  if(!silent && par.tausurfacefile != NULL){
+      sprintf(message, "Using optical depth surface: %s", par.tausurfacefile);
+      printMessage(message);
   }
 
   if(par.doPregrid){

@@ -89,7 +89,7 @@
 #define N_SMOOTH_ITERS          20
 #define TYPICAL_ISM_DENS        1000.0
 #define STR_LEN_0               80
-#define DENSITY_POWER		0.2
+#define DENSITY_POWER		0.5
 #define MAX_N_HIGH              10
 #define TREE_POWER		2.0
 #define ERF_TABLE_LIMIT		6.0             /* For x>6 erf(x)-1<double precision machine epsilon, so no need to store the values for larger x. */
@@ -155,6 +155,8 @@ typedef struct {
   char **moldatfile;
   _Bool writeGridAtStage[NUM_GRID_STAGES], resetRNG;
   char *gridInFile,**gridOutFiles;
+  char *tausurfacefile;
+  double tausurface;
   int dataFlags,nSolveIters;
   double (*gridDensMaxLoc)[DIM], *gridDensMaxValues;
 } configInfo;
@@ -228,6 +230,7 @@ typedef struct{
 typedef struct {
   double *intense;
   double *tau;
+  double *tausurf;
   double stokes[3];
   int numRays;
 } spec;
@@ -250,7 +253,7 @@ typedef struct {
 } imageInfo;
 
 typedef struct {
-  double x,y, *intensity, *tau;
+  double x,y, *intensity, *tau, *tausurf;
   unsigned int ppi;
 } rayData;
 
@@ -371,6 +374,7 @@ void	readDummyCollPart(FILE*, const int);
 void	readDustFile(char*, double**, double**, int*);
 void	readMolData(configInfo*, molData*, int**, int*);
 void	readOrBuildGrid(configInfo*, struct grid**);
+double **readTauSurfaceFile(const char *, double *, double *, double *, double *, double *);
 void	readUserInput(inputPars*, imageInfo**, int*, int*);
 unsigned long reorderGrid(const unsigned long, struct grid*);
 void	report(int, configInfo*, struct grid*);

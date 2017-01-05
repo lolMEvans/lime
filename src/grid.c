@@ -846,9 +846,30 @@ void randomsViaRejection(configInfo *par, const unsigned int desiredNumPoints, g
   const int maxNumAttempts=1000;
   int numRandomsThisPoint,numSecondRandoms=0;
   char errStr[80];
+  double x0_m, y0_m, x1_m, y1_m, pix_to_m;
+  double **tau_surface;
+  int limit_z = 0;
+  int x_ind, y_ind;
+    FILE *fp;
 
   lograd=log10(par->radius);
   logmin=log10(par->minScale);
+
+  /* Check if user has supplied data values for optical depth surface, which, if present, will be used to limit
+     z positions to neglect unnecessary placement of grid points at high optical depths.
+
+     Tau surface file needs to have the following format:
+
+        Line 1: number-of-rows   number-of-columns
+        Line 2: center-pixel-x   center-pixel-y
+        Line 3: topleft-pixel-x  topleft-pixel-y
+        Line 4: pixel-to-meters-conversion
+        Line 5+: 2D grid (number-of-rows * number-of-cols)
+  */
+    if(par->tausurfacefile != NULL) {
+        tau_surface = readTauSurfaceFile(par->tausurfacefile, &x0_m, &y0_m, &x1_m, &y1_m, &pix_to_m);
+        limit_z = 1;
+    }
 
   /* Sample pIntensity number of points */
   for(i_u=0;i_u<desiredNumPoints;i_u++){
@@ -893,6 +914,30 @@ void randomsViaRejection(configInfo *par, const unsigned int desiredNumPoints, g
           if(!silent) bail_out("Don't know how to sample model");
           exit(1);
         }
+
+
+        /* If par->tausurfacefile has been provided use it to restrict point positioning. This can be useful in
+           optically thick models because we don't need points at large optical depths as the contribution to intensity
+           is small.
+        */
+        if(limit_z){
+            /* Check that we are within the limits of the par->tausurfacefile boundaries */
+            if(x[0] > x0_m && x[0] < x1_m && x[1] > y0_m && x[1] < y1_m){
+                /* Convert (x, y) into tau_surface indexes */
+                x_ind = floor((x[0] - x0_m) / pix_to_m);
+                y_ind = floor((x[1] - y0_m) / pix_to_m);
+
+                /* Move points from above optical depth surface to below (this direction is used because the raytracing
+                   is in negative z direction) by an amount proportional to the distance from the center. Therefore we
+                   are essentially shifting the distribution of points from around the center to around the optical depth
+                   surface at each x, y position.
+                */
+                if(x[2] > tau_surface[x_ind][y_ind] * AU && tau_surface[x_ind][y_ind] != 0.0){
+                    x[2] = (tau_surface[x_ind][y_ind] - gsl_rng_uniform(randGen) * fabs(x[2]/AU)/2.) * AU;
+                }
+            }
+        }
+
         pointIsAccepted = pointEvaluation(par, uniformRandom, x);
         j++;
       }
@@ -1307,6 +1352,60 @@ readOrBuildGrid(configInfo *par, struct grid **gp){
 
   dumpGrid(par,*gp);
   free(dc);
+}
+
+double **readTauSurfaceFile(const char *ftau, double *x0_m, double *y0_m, double *x1_m, double *y1_m, double *pix_to_m){
+    int i,j;
+    int num_rows, num_cols;
+    int x0_px, y0_px;
+    float xc_px, yc_px;
+    double pix_to_m_internal;
+    double **tau_surface;
+    FILE *fp;
+    fp = fopen(ftau, "r");
+    if(fp == NULL){
+        if(!silent) bail_out("Error opening tau surface file");
+    }
+
+    /* Tau surface file needs to have the following format:
+
+        Line 1: number-of-rows   number-of-columns
+        Line 2: center-pixel-x   center-pixel-y
+        Line 3: topleft-pixel-x  topleft-pixel-y
+        Line 4: pixel-to-meters-conversion
+        Line 5+: 2D grid (number-of-rows * number-of-cols)
+    */
+
+    /* Read in file */
+    fscanf(fp, "%d\t%d\n", &num_rows, &num_cols);
+    fscanf(fp, "%f\t%f\n", &xc_px, &yc_px);
+    fscanf(fp, "%d\t%d\n", &x0_px, &y0_px);
+    fscanf(fp, "%lf\n", &pix_to_m_internal);
+
+    /* Read in values and allocate memory according to number of rows and columns */
+    tau_surface = (double **) realloc(tau_surface, num_rows * sizeof(*tau_surface));
+    if(tau_surface == NULL){
+        if(!silent) bail_out("Error assigning memory for tau surface");
+    }
+    for (i = 0; i <num_rows; i++) {
+        tau_surface[i] = (double *) malloc(num_cols * sizeof(double));
+        if(tau_surface == NULL){
+            if(!silent) bail_out("Error assigning memory for tau surface");
+        }
+        for (j = 0; j<=num_cols; j++) {
+            fscanf(fp, "%lf\t", &tau_surface[i][j]);
+        }
+    }
+
+    *pix_to_m = pix_to_m_internal;
+    *x0_m = (x0_px - xc_px) * pix_to_m_internal;
+    *y0_m = (y0_px - yc_px) * pix_to_m_internal;
+    *x1_m = *x0_m + num_rows * pix_to_m_internal;
+    *y1_m = *y0_m + num_cols * pix_to_m_internal;
+
+    fclose(fp);
+    // Remember to free tau_surface after grid building
+    return tau_surface;
 }
 
 

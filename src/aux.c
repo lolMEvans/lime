@@ -100,6 +100,7 @@ The parameters visible to the user have now been strictly confined to members of
   par->nSolveIters  = inpar.nSolveIters;
   par->traceRayAlgorithm = inpar.traceRayAlgorithm;
   par->resetRNG     = inpar.resetRNG;
+  par->tausurface   = inpar.tausurface;
 
   /* Somewhat more carefully copy over the strings:
   */
@@ -110,6 +111,7 @@ The parameters visible to the user have now been strictly confined to members of
   copyInparStr(inpar.gridfile,      &(par->gridfile));
   copyInparStr(inpar.pregrid,       &(par->pregrid));
   copyInparStr(inpar.gridInFile,    &(par->gridInFile));
+  copyInparStr(inpar.tausurfacefile,    &(par->tausurfacefile));
 
   par->gridOutFiles = malloc(sizeof(char *)*NUM_GRID_STAGES);
   for(i=0;i<NUM_GRID_STAGES;i++)
@@ -355,6 +357,7 @@ The presence of one of these combinations at least is checked here, although the
     for(id=0;id<((*img)[i].pxls*(*img)[i].pxls);id++){
       (*img)[i].pixel[id].intense = malloc(sizeof(double)*(*img)[i].nchan);
       (*img)[i].pixel[id].tau = malloc(sizeof(double)*(*img)[i].nchan);
+      (*img)[i].pixel[id].tausurf = malloc(sizeof(double)*(*img)[i].nchan);
     }
 
     /*
@@ -491,6 +494,19 @@ LIME provides two different schemes of {R_1, R_2, R_3}: {PA, phi, theta} and {PA
           (*img)[i].rotMat[row][col] += auxRotMat[row][j]*tempRotMat[j][col];
       }
     }
+
+    char msg[10];
+    char message[100];
+    strcpy(message, "\n\n");
+    for(row=0;row<3;row++) {
+      for (col = 0; col < 3; col++) {
+        sprintf(msg, "%.3f\t", (*img)[i].rotMat[row][col]);
+        strcat(message, msg);
+      }
+      strcat(message, "\n");
+    }
+    printMessage(message);
+
   }
 
   par->nLineImages = 0;
