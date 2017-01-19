@@ -39,12 +39,164 @@ mallocInputPars(inputPars *par){
 /*....................................................................*/
 void
 copyInparStr(const char *inStr, char **outStr){
-  if(inStr==NULL || strlen(inStr)<=0 || strlen(inStr)>STR_LEN_0){
+  if(inStr==NULL || strlen(inStr)>STR_LEN_0){
     *outStr = NULL;
   }else{
     *outStr = malloc(sizeof(**outStr)*(STR_LEN_0+1));
     strcpy(*outStr, inStr);
   }
+}
+
+/*....................................................................*/
+char *makeFilename(configInfo *par){
+    char *dest = malloc(sizeof(char)*(STR_LEN_0+1));
+    char *destptr = dest;
+
+    char temp_filename[50];
+    snprintf(temp_filename, sizeof(temp_filename), "%d_%d", par->pIntensity, par->sinkPoints);
+
+    *dest = 0;
+    strcat(destptr, temp_filename);
+    destptr += strlen(temp_filename);
+    *destptr = 0;
+    return dest;
+}
+
+/*....................................................................*/
+char
+*completeFilename(char *inStr, configInfo *par, int ext){
+    char prefix[9] = "[prefix]";
+    char *dest = malloc(sizeof(char)*(STR_LEN_0+1));
+    char *destptr = dest;
+    char *prefixless;
+    char temp[STR_LEN_0];
+    char *final;
+
+    *dest = 0;
+
+    if(!inStr){
+        return NULL;
+    }
+    else if(strlen(inStr) == 0){
+        snprintf(temp, sizeof(temp), "%s", par->filenames);
+    }
+    else if(strstr(inStr, prefix) != NULL){
+        if (par->fileprefix == NULL) {
+            if (!silent) bail_out("Prefix was requested but no prefix was specified.");
+            exit(0);
+        }
+        prefixless = replacePrefix(inStr, prefix, par->fileprefix);
+        snprintf(temp, sizeof(temp), "%s_%s", prefixless, par->filenames);
+        free(prefixless);
+    }
+    else{
+        snprintf(temp, sizeof(temp), "%s", inStr);
+    }
+
+    if(ext > -1){
+      final = addExtension(temp, ext);
+    }
+    else{
+      final = malloc(sizeof(char)*(STR_LEN_0+1));
+      snprintf(final, sizeof(temp), "%s", temp);
+    }
+    strcat(destptr, final);
+    destptr += strlen(final);
+    free(final);
+
+    *destptr = 0;
+    return dest;
+}
+
+/*....................................................................*/
+char
+*completeImageFilename(configInfo *par, int im, imageInfo *img) {
+    const char *unitNames[6] = {"Kelvin", "Jy-per-pixel", "SI", "Lsun-per-pixel", "Tau", "#Rays"};
+    char *temp, *final;
+    char imagetemp[STR_LEN_0];
+    char *molecule = malloc(sizeof(char)*(STR_LEN_0+1));
+
+    temp = completeFilename(img[im].filename, par, -1);
+
+    if(img[im].doline == 1){
+        molecule = removeExtension(par->moldatfile[0], '.', '/');
+        snprintf(imagetemp, sizeof(imagetemp), "%s_%s%d-%d_PA=%.0f_i=%.0f_AZ=%.0f_%s", temp, molecule,
+                 img[im].trans, img[im].trans-1,
+                 img[im].posang*180./PI, img[im].incl*180./PI, img[im].azimuth*180./PI, unitNames[img[im].unit]);
+    }
+    else if(img[im].doline == 0){
+        snprintf(imagetemp, sizeof(imagetemp), "%s_%.0fGHz_PA=%.0f_i=%.0f_AZ=%.0f_%s", temp, img[im].freq/1E9,
+                 img[im].posang*180./PI, img[im].incl*180./PI, img[im].azimuth*180./PI, unitNames[img[im].unit]);
+    }
+    final = addExtension(imagetemp, 7);
+
+    free(temp);
+    free(molecule);
+    return final;
+}
+
+/*....................................................................*/
+char
+*addExtension(char *inStr, int ext){
+    const char *filenamesExtensions[8] = {".pop", "_restart.pop", ".vtk", "_0.ds", "_1.ds", "_2.ds", "_3.ds", ".fits"};
+    char *outStr = malloc(sizeof(char)*(STR_LEN_0+1));
+
+    snprintf(outStr, sizeof(char)*(STR_LEN_0+1), "%s%s", inStr, filenamesExtensions[ext]);
+    return outStr;
+
+}
+
+/*....................................................................*/
+char
+*removeExtension(char *inStr, char extChar, char sepChar) {
+    char *outStr, *lastDot, *lastSep;
+
+    if (inStr == NULL)
+        return NULL;
+    if ((outStr = malloc(strlen(inStr)+1)) == NULL)
+        return NULL;
+
+    strcpy(outStr, inStr);
+    lastDot = strrchr(outStr, extChar); /* Find last extension character */
+    lastSep = (sepChar == 0) ? NULL : strrchr(outStr, sepChar); /* Find last path separator character */
+
+    /* Truncate before last extension character if there is no path separator character or if it is positioned
+     * after the last path separator character */
+    if (lastDot != NULL) {
+        if (lastSep != NULL) {
+            if (lastSep < lastDot) {
+                *lastDot = '\0';
+            }
+        } else {
+            *lastDot = '\0';
+        }
+    }
+    return outStr;
+}
+
+/*....................................................................*/
+char
+*replacePrefix(char *inStr, char *findStr, char *replaceStr) {
+    char *dest = malloc(strlen(inStr)-strlen(findStr)+strlen(replaceStr)+1);
+    char *destptr = dest;
+
+    *dest = 0;
+    while (*inStr)
+    {
+        if (!strncmp(inStr, findStr, strlen(findStr)))
+        {
+            strcat(destptr, replaceStr);
+            inStr += strlen(findStr);
+            destptr += strlen(replaceStr);
+        } else
+        {
+            *destptr = *inStr;
+            destptr++;
+            inStr++;
+        }
+    }
+    *destptr = 0;
+    return dest;
 }
 
 /*....................................................................*/
@@ -110,6 +262,8 @@ The parameters visible to the user have now been strictly confined to members of
   copyInparStr(inpar.gridfile,      &(par->gridfile));
   copyInparStr(inpar.pregrid,       &(par->pregrid));
   copyInparStr(inpar.gridInFile,    &(par->gridInFile));
+  copyInparStr(inpar.filenames,     &(par->filenames));
+  copyInparStr(inpar.fileprefix,     &(par->fileprefix));
 
   par->gridOutFiles = malloc(sizeof(char *)*NUM_GRID_STAGES);
   for(i=0;i<NUM_GRID_STAGES;i++)

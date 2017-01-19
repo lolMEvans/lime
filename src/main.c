@@ -60,6 +60,8 @@ initParImg(inputPars *par, image **img)
   par->pregrid      = NULL;
   par->restart      = NULL;
   par->gridInFile   = NULL;
+  par->filenames  = NULL;
+  par->fileprefix = NULL;
 
   par->collPartIds  = malloc(sizeof(int)*MAX_N_COLL_PART);
   for(i=0;i<MAX_N_COLL_PART;i++) par->collPartIds[i] = 0; /* Possible values start at 1. */
@@ -171,18 +173,38 @@ run(inputPars inpars, image *inimg, const int nImages){
 
   parseInput(inpars, inimg, nImages, &par, &img, &md); /* Sets par.numDensities for !(par.doPregrid || par.restart) */
 
-  if(!silent){
-    sprintf(message, "Using points = %d", par.pIntensity);
-    printMessage(message, 30);
-    sprintf(message, "Using sinks = %d", par.sinkPoints);
-    printMessage(message, 31);
-    sprintf(message, "Using n0 = %.3e, w = %.3f", pow(10, log10(par.gridDensGlobalMax)/DENSITY_POWER), DENSITY_POWER);
-    printMessage(message, 32);
+  if(!silent && par.nThreads>1){
+      sprintf(message, "Number of threads used: %d", par.nThreads);
+      printMessage(message, 1);
   }
 
-  if(!silent && par.nThreads>1){
-    sprintf(message, "Number of threads used: %d", par.nThreads);
-    printMessage(message, 1);
+  if(!silent){
+      sprintf(message, "Using points = %d", par.pIntensity);
+      printMessage(message, 30);
+      sprintf(message, "Using sinks = %d", par.sinkPoints);
+      printMessage(message, 31);
+      sprintf(message, "Using n0 = %.3e, w = %.3f", pow(10, log10(par.gridDensGlobalMax)/DENSITY_POWER), DENSITY_POWER);
+      printMessage(message, 32);
+  }
+
+  /* Create common filenames from par->pIntensity and par->sinkPoints */
+  par.filenames = makeFilename(&par);
+  /* Create completed filenames using par->filenames unless the user has specified a custom filename. If the user
+   * specifies par->filesprefix then this is added to each filename in place of "[prefix]". This is explained in
+   * more detail in the example/model.c
+  */
+  par.outputfile = completeFilename(par.outputfile, &par, 0);
+  par.binoutputfile = completeFilename(par.binoutputfile, &par, 1);
+  par.gridfile = completeFilename(par.gridfile, &par, 2);
+  for(i=0; i<NUM_GRID_STAGES; i++){
+      par.gridOutFiles[i] = completeFilename(par.gridOutFiles[i], &par, 3+i);
+  }
+
+  for(i=0; i<par.nImages; i++){
+      img[i].filename = completeImageFilename(&par, i, img);
+      if(!silent){
+          if(img[i].filename) printMessage(img[i].filename, 34+i);
+      }
   }
 
   if(par.doPregrid){
@@ -209,6 +231,8 @@ run(inputPars inpars, image *inimg, const int nImages){
       }
     }
   }
+
+    exit(0);
 
   if(par.nLineImages>0){
     molInit(&par, md);

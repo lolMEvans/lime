@@ -89,8 +89,8 @@
 #define MAX_N_COLL_PART         7
 #define N_SMOOTH_ITERS          20
 #define TYPICAL_ISM_DENS        1000.0
-#define STR_LEN_0               80
-#define DENSITY_POWER           0.2
+#define STR_LEN_0               200
+#define DENSITY_POWER		0.5
 #define MAX_N_HIGH              10
 #define TREE_POWER              2.0
 #define ERF_TABLE_LIMIT         6.0             /* For x>6 erf(x)-1<double precision machine epsilon, so no need to store the values for larger x. */
@@ -158,6 +158,8 @@ typedef struct {
   char *gridInFile,**gridOutFiles;
   int dataFlags,nSolveIters;
   double (*gridDensMaxLoc)[DIM], *gridDensMaxValues;
+  char *filenames;
+  char *fileprefix;
 } configInfo;
 
 struct cpData {
@@ -321,6 +323,11 @@ void	calcSourceFn(double, const configInfo*, double*, double*);
 void	calcTableEntries(const int, const int);
 void	checkGridDensities(configInfo*, struct grid*);
 void	checkUserDensWeights(configInfo*);
+char    *completeFilename(char*, configInfo*, int);
+char    *completeImageFilename(configInfo*, int, imageInfo*);
+char    *addExtension(char*, int);
+char    *removeExtension(char*, char, char);
+char    *replacePrefix(char*, char*, char*);
 void	delaunay(const int, struct grid*, const unsigned long, const _Bool, const _Bool, struct cell**, unsigned long*);
 void	distCalc(configInfo*, struct grid*);
 double	dotProduct3D(const double*, const double*);
@@ -347,6 +354,7 @@ void	getmatrix(int, gsl_matrix*, molData*, struct grid*, int, gridPointData*);
 void	getVelocities(configInfo *, struct grid *);
 void	getVelocities_pregrid(configInfo *, struct grid *);
 void	gridPopsInit(configInfo*, molData*, struct grid*);
+void    imageFilename(char *, configInfo *, imageInfo *, const int, const int);
 void	input(inputPars*, image*);
 double	interpolateKappa(const double, double*, double*, const int, gsl_spline*, gsl_interp_accel*);
 float	invSqrt(float);
@@ -354,6 +362,7 @@ void	levelPops(molData*, configInfo*, struct grid*, int*, double*, double*, cons
 void	lineBlend(molData*, configInfo*, struct blendInfo*);
 void	LTE(configInfo*, struct grid*, molData*);
 void	lteOnePoint(molData*, const int, const double, double*);
+char    *makeFilename(configInfo*);
 void	mallocAndSetDefaultGrid(struct grid**, const unsigned int);
 void	mallocInputPars(inputPars*);
 void	molInit(configInfo*, molData*);
@@ -361,7 +370,7 @@ void	openSocket(char*);
 void	parseInput(inputPars, image*, const int, configInfo*, imageInfo**, molData**);
 void	photon(int, struct grid*, molData*, const gsl_rng*, configInfo*, const int, struct blendInfo, gridPointData*, double*);
 double	planckfunc(const double, const double);
-int	pointEvaluation(configInfo*, const double, double*);
+int	    pointEvaluation(configInfo*, const double, double*);
 void	popsin(configInfo*, struct grid**, molData**, int*);
 void	popsout(configInfo*, struct grid*, molData*);
 void	predefinedGrid(configInfo*, struct grid*);

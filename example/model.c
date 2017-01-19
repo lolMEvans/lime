@@ -29,10 +29,6 @@ input(inputPars *par, image *img){
   par->nSolveIters              = 14;
   par->resetRNG	                = 0;
 
-  par->outputfile               = "populations.pop";
-  par->binoutputfile            = "restart.pop";
-  par->gridfile                 = "grid.vtk";
-
   /*
     Setting elements of the following three arrays is optional. NOTE
     that, if you do set any of their values, you should set as many as
@@ -83,6 +79,42 @@ input(inputPars *par, image *img){
   par->nMolWeights[0]           = 1.0;
   par->dustWeights[0]           = 1.0;
 
+  /* All output filenames can be custom-set or LIME can automatically assign filenames using the number of grid and
+     sink points and an appropriate filename extension. The user can also set a prefix to be added to all outputted
+     files if "[prefix]" is contained within the output filename. Note if "[prefix]" is specified then par->fileprefix
+     must also be specified.
+
+     In the case of images they are automatically named using the number of grid and sink points and image inclination
+     information (in degrees). If it is a continuum image then the frequency is added (in GHz), otherwise for a line
+     image the molecule and transition are added. The physical name of the unit is then appended, and finally, as with
+     all other output filenames, an appropriate extension is appended.
+
+            Example:
+                par->pIntensity = 25000
+                par->sinkPoints = 2500
+
+                par->fileprefix = "simulation"
+                par->outputfile = "[prefix]_custom_identifier"
+                par->binoutputfile = ""
+                par->gridfile = "custom_gridfile_name"
+
+                img[0].freq = 300E9; img[0].posang = PI/2; img[0].incl = -PI/2; img[0].azimuth = 0;
+                img[0].unit = 0;
+                img[0].filename = ""
+
+            This would output the following the files:
+                "simulation_custom_identifier_25000_2500.pop"
+                "25000_2500_restart.pop"
+                "custom_gridfile_name.vtk"
+                "25000_2500_300GHz_PA=-90_i=-90_AZ=0_Kelvin.fits
+      */
+
+  par->fileprefix               = "custom_prefix";
+
+  par->outputfile               = "populations.pop";
+  par->binoutputfile            = "restart.pop";
+  par->gridfile                 = "grid.vtk";
+
   /* Set one or more of the following parameters for full output of the grid-specific data at any of 4 stages during the processing. (See the header of gridio.c for information about the stages.)
   par->gridOutFiles[0] = "grid_1.ds";
   par->gridOutFiles[1] = "grid_2.ds";
@@ -93,6 +125,7 @@ input(inputPars *par, image *img){
   /* You can also optionally read in a FITS file stored via the previous parameters, or prepared externally. See the header of grid2fits.c for information about the correct file format. LIME can cope with almost any sensible subset of the recognized columns; it will use the file values if they are present, then calculate the missing ones.
   par->gridInFile = "grid_4.ds";
   */
+
 
   /*
    * Definitions for image #0. Add blocks with successive values of i for additional images.
