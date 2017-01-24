@@ -26,6 +26,8 @@ typedef struct {
   int nSolveIters;
   double (*gridDensMaxLoc)[DIM], *gridDensMaxValues;
   _Bool resetRNG;
+  char *filenames;
+  char *fileprefix;
 } inputPars;
 
 /* Image information */
