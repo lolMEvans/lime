@@ -161,7 +161,7 @@ run(inputPars inpars, image *inimg, const int nImages){
   char message[80];
   int nEntries=0;
   double *lamtab=NULL, *kaptab=NULL;
-  char *fits_filename;
+  char *temp_img_filename;
 
   /*Set locale to avoid trouble when reading files*/
   setlocale(LC_ALL, "C");
@@ -204,9 +204,11 @@ run(inputPars inpars, image *inimg, const int nImages){
   }
 
   for(i=0; i<par.nImages; i++){
-      img[i].filename = completeImageFilename(&par, i, img);
-      if(!silent){
-          if(img[i].filename) printMessage(img[i].filename, 34+i);
+      for(j=0;j<img[i].numunits;j++) {
+          temp_img_filename = completeImageFilename(&par, i, j, img);
+          if (!silent) {
+              if (temp_img_filename) printMessage(temp_img_filename, 34 + i);
+          }
       }
   }
 
@@ -229,17 +231,15 @@ run(inputPars inpars, image *inimg, const int nImages){
   if(par.nContImages>0){
     for(i=0;i<par.nImages;i++){
       if(!img[i].doline){
-        copyInparStr(img[i].filename, &(fits_filename));
+        copyInparStr(img[i].filename, &(temp_img_filename));
         raytrace(i, &par, gp, md, img, lamtab, kaptab, nEntries);
         for(j=0;j<img[i].numunits;j++) {
-	        fitsFilename(fits_filename, &par, img, i, j);
-        	writeFits(i,j,&par,img);
+            temp_img_filename = completeImageFilename(&par, i, j, img);
+            writeFits(i,j,&par,img, temp_img_filename);
         }
       }
     }
   }
-
-    exit(0);
 
   if(par.nLineImages>0){
     molInit(&par, md);
@@ -278,11 +278,11 @@ run(inputPars inpars, image *inimg, const int nImages){
   if(par.nLineImages>0){
     for(i=0;i<par.nImages;i++){
       if(img[i].doline){
-        copyInparStr(img[i].filename, &(fits_filename));
+        copyInparStr(img[i].filename, &(temp_img_filename));
         raytrace(i, &par, gp, md, img, lamtab, kaptab, nEntries);
         for(j=0;j<img[i].numunits;j++) {
-	        fitsFilename(fits_filename, &par, img, i, j);
-        	writeFits(i,j,&par,img);
+            temp_img_filename = completeImageFilename(&par, i, j, img);
+        	writeFits(i,j,&par,img, temp_img_filename);
         }
       }
     }

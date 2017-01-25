@@ -90,7 +90,7 @@
 #define N_SMOOTH_ITERS          20
 #define TYPICAL_ISM_DENS        1000.0
 #define STR_LEN_0               200
-#define DENSITY_POWER		0.5
+#define DENSITY_POWER		    0.5
 #define MAX_N_HIGH              10
 #define TREE_POWER              2.0
 #define ERF_TABLE_LIMIT         6.0             /* For x>6 erf(x)-1<double precision machine epsilon, so no need to store the values for larger x. */
@@ -326,7 +326,7 @@ void	calcTableEntries(const int, const int);
 void	checkGridDensities(configInfo*, struct grid*);
 void	checkUserDensWeights(configInfo*);
 char    *completeFilename(char*, configInfo*, int);
-char    *completeImageFilename(configInfo*, int, imageInfo*);
+char    *completeImageFilename(configInfo*, int, int, imageInfo*);
 char    *addExtension(char*, int);
 char    *removeExtension(char*, char, char);
 char    *replacePrefix(char*, char*, char*);
@@ -339,7 +339,6 @@ void    fillErfTable();
 void	fit_d1fi(double, double, double*);
 void	fit_fi(double, double, double*);
 void	fit_rr(double, double, double*);
-void    fitsFilename(char *, configInfo *, imageInfo *, const int, const int);
 void	freeConfigInfo(configInfo par);
 void	freeGrid(const unsigned int, const unsigned short, struct grid*);
 void	freeGridPointData(const int, gridPointData*);
@@ -396,9 +395,9 @@ void	stateq(int, struct grid*, molData*, const int, configInfo*, struct blendInf
 void	statistics(int, molData*, struct grid*, int*, double*, double*, int*);
 void	stokesangles(double*, double (*rotMat)[3], double*);
 double	taylor(const int, const float);
-void	write2Dfits(int, int, configInfo*, imageInfo*);
-void	write3Dfits(int, int, configInfo*, imageInfo*);
-void	writeFits(const int, const int, configInfo*, imageInfo*);
+void	write2Dfits(int, int, configInfo*, imageInfo*, char*);
+void	write3Dfits(int, int, configInfo*, imageInfo*, char*);
+void	writeFits(const int, const int, configInfo*, imageInfo*, char*);
 void	writeGridIfRequired(configInfo*, struct grid*, molData*, const int);
 void	write_VTK_unstructured_Points(configInfo*, struct grid*);
 

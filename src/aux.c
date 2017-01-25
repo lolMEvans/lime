@@ -95,7 +95,7 @@ char
 
 /*....................................................................*/
 char
-*completeImageFilename(configInfo *par, int im, imageInfo *img) {
+*completeImageFilename(configInfo *par, int im, int j, imageInfo *img) {
     const char *unitNames[6] = {"Kelvin", "Jy-per-pixel", "SI", "Lsun-per-pixel", "Tau", "#Rays"};
     char *temp, *final;
     char imagetemp[STR_LEN_0];
@@ -107,11 +107,11 @@ char
         molecule = removeExtension(par->moldatfile[0], '.', '/');
         snprintf(imagetemp, sizeof(imagetemp), "%s_%s%d-%d_PA=%.0f_i=%.0f_AZ=%.0f_%s", temp, molecule,
                  img[im].trans, img[im].trans-1,
-                 img[im].posang*180./PI, img[im].incl*180./PI, img[im].azimuth*180./PI, unitNames[img[im].unit]);
+                 img[im].posang*180./PI, img[im].incl*180./PI, img[im].azimuth*180./PI, unitNames[img[im].imgunits[j]]);
     }
     else if(img[im].doline == 0){
         snprintf(imagetemp, sizeof(imagetemp), "%s_%.0fGHz_PA=%.0f_i=%.0f_AZ=%.0f_%s", temp, img[im].freq/1E9,
-                 img[im].posang*180./PI, img[im].incl*180./PI, img[im].azimuth*180./PI, unitNames[img[im].unit]);
+                 img[im].posang*180./PI, img[im].incl*180./PI, img[im].azimuth*180./PI, unitNames[img[im].imgunits[j]]);
     }
     final = addExtension(imagetemp, 7);
 

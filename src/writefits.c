@@ -9,39 +9,19 @@
 
 #include "lime.h"
 
-void writeFits(const int i, const int unit, configInfo *par, imageInfo *img){
+void writeFits(const int i, const int unit, configInfo *par, imageInfo *img, char *img_filename){
   if(img[i].imgunits[unit]<5)
-    write3Dfits(i,unit,par,img);
+    write3Dfits(i,unit,par,img, img_filename);
   else if(img[i].imgunits[unit]==5)
-    write2Dfits(i,unit,par,img);
+    write2Dfits(i,unit,par,img, img_filename);
   else{
     if(!silent) bail_out("Image unit number invalid");
     exit(0);
   }
 }
 
-void fitsFilename(char *fits_filename, configInfo *par, imageInfo *img, const int im, const int unit){
-  char *temp_filename;
-  static char* unit_names[] = {"Kelvin", "Jansky-per-px", "SI", "LSun-per-px", "Tau", "#Rays"};
-
-  /* Check unit number has a corresponding unit name */
-  if(img[im].numunits < 0 || img[im].numunits > sizeof(unit_names)/sizeof(*unit_names) - 1){
-    if(!silent) bail_out("Image unit number does not have a corresponding unit name");
-    exit(0);
-  }
-
-  /* Append unit name to temporary filename */
-  copyInparStr(fits_filename, &(temp_filename));
-  strcat(temp_filename, "_");
-  strcat(temp_filename, unit_names[img[im].imgunits[unit]]);
-  strcat(temp_filename, ".fits");
-
-  /* Update image filename from temporary filename */
-  copyInparStr(temp_filename, &(img[im].filename));
-}
-
 void 
-write3Dfits(int im, int unit, configInfo *par, imageInfo *img){
+write3Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filename){
   double bscale,bzero,epoch,lonpole,equinox,restfreq;
   double cdelt1,crpix1,crval1,cdelt2,crpix2,crval2;
   double cdelt3,crpix3,crval3,ru3,scale;
@@ -64,12 +44,12 @@ write3Dfits(int im, int unit, configInfo *par, imageInfo *img){
   else if(img[im].doline==0 && par->polarization) naxes[2]=3;
   else naxes[2]=1;//********** should call write2Dfits for this.
 
-  fits_create_file(&fptr, img[im].filename, &status);
+  fits_create_file(&fptr, img_filename, &status);
 
   if(status!=0){
     if(!silent) warning("Overwriting existing fits file                   ");
     status=0;
-    strcat(negfile,img[im].filename);
+    strcat(negfile, img_filename);
     fits_create_file(&fptr, negfile, &status);
   }
 
@@ -176,7 +156,7 @@ write3Dfits(int im, int unit, configInfo *par, imageInfo *img){
 }
 
 void 
-write2Dfits(int im, int unit, configInfo *par, imageInfo *img){
+write2Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filename){
   double bscale,bzero,epoch,lonpole,equinox,restfreq;
   double cdelt1,crpix1,crval1,cdelt2,crpix2,crval2;
   double ru3,scale;
@@ -200,12 +180,12 @@ write2Dfits(int im, int unit, configInfo *par, imageInfo *img){
     exit(0);
   }
 
-  fits_create_file(&fptr, img[im].filename, &status);
+  fits_create_file(&fptr, img_filename, &status);
 
   if(status!=0){
     if(!silent) warning("Overwriting existing fits file                   ");
     status=0;
-    strcat(negfile,img[im].filename);
+    strcat(negfile, img_filename);
     fits_create_file(&fptr, negfile, &status);
   }
 
