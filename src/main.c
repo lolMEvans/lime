@@ -161,7 +161,6 @@ run(inputPars inpars, image *inimg, const int nImages){
   /*Set locale to avoid trouble when reading files*/
   setlocale(LC_ALL, "C");
 
-  if(!silent) greetings();
   if(!silent) screenInfo();
 
 #ifdef FASTEXP
@@ -263,6 +262,8 @@ int main () {
   inputPars par;
   image	*img = NULL;
   int nImages;
+
+  if(!silent) greetings();
 
   nImages = initParImg(&par, &img);
 
