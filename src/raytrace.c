@@ -107,11 +107,8 @@ Note that the algorithm employed here is similar to that employed in the functio
   double contJnu,contAlpha,jnu,alpha,lineRedShift,vThisChan,deltav,vfac=0.;
   double remnantSnu,expDTau,brightnessIncrement;
   double projVels[nSteps],d,vel[DIM];
-
-  for(ichan=0;ichan<img[im].nchan;ichan++){
-    ray.tau[ichan]=0.0;
-    ray.intensity[ichan]=0.0;
-  }
+  int tauexceeded = 0;
+  double taudepth = 0.0, zprev = 0.0;
 
   xp=ray.x;
   yp=ray.y;
@@ -122,6 +119,14 @@ Note that the algorithm employed here is similar to that employed in the functio
     return;
 
   zp=-sqrt(par->radiusSqu-(xp*xp+yp*yp)); /* There are two points of intersection between the line of sight and the spherical model surface; this is the Z coordinate (in the unrotated frame) of the one nearer to the observer. */
+
+  /* Initialise ray properties */
+    for(ichan=0;ichan<img[im].nchan;ichan++){
+        ray.tau[ichan]=0.0;
+        ray.intensity[ichan]=0.0;
+        /* Set initial optical depth surface to maximum traversable distance to indicate optically thin propagation */
+        ray.tausurf[ichan]=-2*zp;
+    }
 
   /* Rotate the line of sight as desired. */
   for(di=0;di<DIM;di++){
@@ -222,6 +227,13 @@ Note that the algorithm employed here is similar to that employed in the functio
 #endif
         ray.intensity[ichan] += brightnessIncrement;
         ray.tau[ichan]+=dtau;
+
+        if(ray.tau[ichan] > par->tausurface && tauexceeded == 0){
+          taudepth = ((par->tausurface - (ray.tau[ichan] - dtau))/dtau) * (x[2] - zprev) + zprev; /* Simple linear interpolation */
+          ray.tausurf[ichan] = taudepth;
+          tauexceeded = 1;
+        }
+        zprev = x[2]; /* Keep track of previous z position for linear interpolation calculation */
       } /* end loop over channels */
     } /* end if(par->polarization) */
 
@@ -545,9 +557,11 @@ Returned information is thus:
     rays[*numActiveRays].y = x[1];
     rays[*numActiveRays].tau       = malloc(sizeof(double)*img[im].nchan);
     rays[*numActiveRays].intensity = malloc(sizeof(double)*img[im].nchan);
+    rays[*numActiveRays].tausurf = malloc(sizeof(double)*img[im].nchan);
     for(ichan=0;ichan<img[im].nchan;ichan++) {
       rays[*numActiveRays].tau[ichan] = 0.0;
       rays[*numActiveRays].intensity[ichan] = 0.0;
+      rays[*numActiveRays].tausurf[ichan] = 0.0;
     }
 
     (*numActiveRays)++;
@@ -838,6 +852,7 @@ At the present point in the code, for line images, instead of calculating the 'c
     for(ichan=0;ichan<img[im].nchan;ichan++){
       img[im].pixel[ppi].intense[ichan] = 0.0;
       img[im].pixel[ppi].tau[    ichan] = 0.0;
+      img[im].pixel[ppi].tausurf[ichan] = 0.0;
     }
   }
 
@@ -1006,6 +1021,7 @@ While this is off however, gsl_* calls will not exit if they encounter a problem
       for(ichan=0;ichan<img[im].nchan;ichan++){
         img[im].pixel[rays[ri].ppi].intense[ichan] += rays[ri].intensity[ichan];
         img[im].pixel[rays[ri].ppi].tau[    ichan] += rays[ri].tau[      ichan];
+        img[im].pixel[rays[ri].ppi].tausurf[ichan] += rays[ri].tausurf[  ichan];
       }
     }
   }
@@ -1016,6 +1032,7 @@ While this is off however, gsl_* calls will not exit if they encounter a problem
       for(ichan=0;ichan<img[im].nchan;ichan++){
         img[im].pixel[ppi].intense[ichan] *= oneOnNumRays;
         img[im].pixel[ppi].tau[    ichan] *= oneOnNumRays;
+        img[im].pixel[ppi].tausurf[ichan] *= oneOnNumRays;
       }
     }else
       numPixelsForInterp++;
@@ -1110,6 +1127,9 @@ While this is off however, gsl_* calls will not exit if they encounter a problem
               img[im].pixel[ppi].tau[    ichan] += barys[0]*rays[gis[0]].tau[ichan]\
                                                  + barys[1]*rays[gis[1]].tau[ichan]\
                                                  + barys[2]*rays[gis[2]].tau[ichan];
+              img[im].pixel[ppi].tausurf[ichan] += barys[0]*rays[gis[0]].tausurf[ichan]\
+                                                 + barys[1]*rays[gis[1]].tausurf[ichan]\
+                                                 + barys[2]*rays[gis[2]].tausurf[ichan];
             } /* End loop over ichan */
           } /* End if rasterPixelIsInCells */
         } /* End loop over yi */
@@ -1128,6 +1148,7 @@ While this is off however, gsl_* calls will not exit if they encounter a problem
   for(ri=0;ri<numActiveRays;ri++){
     free(rays[ri].tau);
     free(rays[ri].intensity);
+    free(rays[ri].tausurf);
   }
   free(rays);
 

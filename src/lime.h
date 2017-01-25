@@ -156,6 +156,8 @@ typedef struct {
   char **moldatfile;
   _Bool writeGridAtStage[NUM_GRID_STAGES], resetRNG;
   char *gridInFile,**gridOutFiles;
+  char *tausurfacefile;
+  double tausurface;
   int dataFlags,nSolveIters;
   double (*gridDensMaxLoc)[DIM], *gridDensMaxValues;
   char *filenames;
@@ -231,6 +233,7 @@ typedef struct{
 typedef struct {
   double *intense;
   double *tau;
+  double *tausurf;
   double stokes[3];
   int numRays;
 } spec;
@@ -255,7 +258,7 @@ typedef struct {
 } imageInfo;
 
 typedef struct {
-  double x,y, *intensity, *tau;
+  double x,y, *intensity, *tau, *tausurf;
   unsigned int ppi;
 } rayData;
 
@@ -382,6 +385,7 @@ void	readDummyCollPart(FILE*, const int);
 void	readDustFile(char*, double**, double**, int*);
 void	readMolData(configInfo*, molData*, int**, int*);
 void	readOrBuildGrid(configInfo*, struct grid**);
+double **readTauSurfaceFile(const char *, double *, double *, double *, double *, double *);
 void	readUserInput(inputPars*, imageInfo**, int*, int*);
 unsigned long reorderGrid(const unsigned long, struct grid*);
 void	report(int, configInfo*, struct grid*);

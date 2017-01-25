@@ -10,9 +10,9 @@
 #include "lime.h"
 
 void writeFits(const int i, const int unit, configInfo *par, imageInfo *img, char *img_filename){
-  if(img[i].imgunits[unit]<5)
+  if(img[i].imgunits[unit]<6)
     write3Dfits(i,unit,par,img, img_filename);
-  else if(img[i].imgunits[unit]==5)
+  else if(img[i].imgunits[unit]==6)
     write2Dfits(i,unit,par,img, img_filename);
   else{
     if(!silent) bail_out("Image unit number invalid");
@@ -101,7 +101,7 @@ write3Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filenam
   if(img[im].imgunits[unit]==2) fits_write_key(fptr, TSTRING, "BUNIT", &"WM2HZSR ", "", &status);
   if(img[im].imgunits[unit]==3) fits_write_key(fptr, TSTRING, "BUNIT", &"Lsun/PX ", "", &status);
   if(img[im].imgunits[unit]==4) fits_write_key(fptr, TSTRING, "BUNIT", &"        ", "", &status);
-  if(img[im].imgunits[unit]==5) fits_write_key(fptr, TSTRING, "BUNIT", &"N_RAYS  ", "", &status);
+  if(img[im].imgunits[unit]==5) fits_write_key(fptr, TSTRING, "BUNIT", &"M       ", "", &status);
 
   if(     img[im].imgunits[unit]==0)
     scale=0.5*(CLIGHT/img[im].freq)*(CLIGHT/img[im].freq)/KBOLTZ;
@@ -132,7 +132,7 @@ write3Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filenam
         else if(img[im].imgunits[unit]==4)
           row[px]=(float) img[im].pixel[ppi].tau[ichan];
         else if(img[im].imgunits[unit]==5)
-            row[px]=(float) img[im].pixel[ppi].numRays;
+            row[px]=(float) img[im].pixel[ppi].tausurf[ichan]*scale;
         else {
           if(!silent) bail_out("Image unit number invalid");
           exit(0);
@@ -229,7 +229,8 @@ write2Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filenam
   if(img[im].imgunits[unit]==2) fits_write_key(fptr, TSTRING, "BUNIT", &"WM2HZSR ", "", &status);
   if(img[im].imgunits[unit]==3) fits_write_key(fptr, TSTRING, "BUNIT", &"Lsun/PX ", "", &status);
   if(img[im].imgunits[unit]==4) fits_write_key(fptr, TSTRING, "BUNIT", &"        ", "", &status);
-  if(img[im].imgunits[unit]==5) fits_write_key(fptr, TSTRING, "BUNIT", &"N_RAYS  ", "", &status);
+  if(img[im].imgunits[unit]==5) fits_write_key(fptr, TSTRING, "BUNIT", &"M       ", "", &status);
+  if(img[im].imgunits[unit]==6) fits_write_key(fptr, TSTRING, "BUNIT", &"N_RAYS  ", "", &status);
 
   if(     img[im].imgunits[unit]==0)
     scale=0.5*(CLIGHT/img[im].freq)*(CLIGHT/img[im].freq)/KBOLTZ;
@@ -244,7 +245,7 @@ write2Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filenam
   else if(img[im].imgunits[unit]==5){
     scale = 1./AU;
   }
-  else if(img[im].imgunits[unit]!=4) {
+  else if(img[im].imgunits[unit]!=4 && img[im].imgunits[unit]!=6) {
     if(!silent) bail_out("Image unit number invalid");
     exit(0);
   }
@@ -264,6 +265,8 @@ write2Dfits(int im, int unit, configInfo *par, imageInfo *img, char *img_filenam
       else if(img[im].imgunits[unit]==4)
         row[px]=(float) img[im].pixel[ppi].tau[0];
       else if(img[im].imgunits[unit]==5)
+       	row[px]=(float) img[im].pixel[ppi].tausurf[0]*scale;
+      else if(img[im].imgunits[unit]==6)
         row[px]=(float) img[im].pixel[ppi].numRays;
       else {
         if(!silent) bail_out("Image unit number invalid");

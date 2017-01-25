@@ -23,6 +23,7 @@ freeConfigInfo(configInfo par){
   free(par.pregrid);
   free(par.restart);
   free(par.dust);
+  free(par.tausurfacefile);
   if(par.moldatfile!= NULL){
     for(i=0;i<par.nSpecies;i++)
       free(par.moldatfile[i]);
@@ -77,6 +78,7 @@ freeImgInfo(const int nImages, imageInfo *img){
     for(id=0;id<(img[i].pxls*img[i].pxls);id++){
       free( img[i].pixel[id].intense );
       free( img[i].pixel[id].tau );
+      free( img[i].pixel[id].tausurf );
     }
     free(img[i].pixel);
     free(img[i].filename);
